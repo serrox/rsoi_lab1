@@ -10,6 +10,31 @@ access_token = ""
 client_id = "be657616cb9e4c07b8a53f42fc9670f2"
 client_secret = "39a8f0a14c4248368bcc03b6c36812f1"
 
+def get_code():
+    app = flask.Flask(__name__)
+
+    def shutdown_flask():
+        func = flask.request.environ.get('werkzeug.server.shutdown')
+        if func is None:
+            raise RuntimeError('Not running with the Werkzeug Server')
+        func()
+        return "Done"
+
+    @app.route("/")
+    def requst():
+        global authenticate_code
+
+        try:
+            authenticate_code = flask.request.args["code"]
+        except (ValueError, KeyError):
+            flask.abort(400, "code not found!")
+
+        shutdown_flask()
+
+        return "Ok"
+
+    app.run(port=8080)
+
 def authenticate():
 	global access_token
 	params = "grant_type=authorization_code&code=" + authenticate_code + "&client_id=" + client_id + "&client_secret="+ client_secret
@@ -24,9 +49,7 @@ def authenticate_user():
 	global authenticate_code
 	print('Opening login windows. Press any key when you are logged in')
 	webbrowser.open_new("https://oauth.yandex.ru/authorize?response_type=code&client_id="+client_id)
-	os.system("PAUSE")
-	print('acces code: ')
-	authenticate_code = input()
+	get_code()
 	return authenticate()
 	
 def get_counter():
@@ -56,6 +79,6 @@ def get_counter():
 	print("PageViews:  " + str(r['data'][0]['metrics'][1][0]))
 	print("Uniq users: " + str(r['data'][0]['metrics'][2][0]))
 	return
-
+	
 authenticate_user()
 get_counter()
